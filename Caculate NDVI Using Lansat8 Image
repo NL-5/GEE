@@ -1,0 +1,52 @@
+function NDVI_V1(img) {                               //定义方法一函数
+ var nir = img.select("B5");                          //选择影像的Band 5，近红外波段
+ var red = img.select("B4");                          //选择影像的Band 4，红光波段
+ var ndvi = nir.subtract(red).divide(nir.add(red));   //用数学公式计算NDVI，[(B5-B4)/(B5+B4)]
+ return ndvi;     																	  //返回NDVI的值
+}
+
+function NDVI_V2(img) {                                                         //定义方法二函数
+ var nir = img.select("B5");                                                    //选择影像的Band 5，近红外波段
+ var red = img.select("B4");                                                    //选择影像的Band 4，红光波段
+ var ndvi = img.expression("(B5 - B4)/(B5 + B4)", {"B5": nir, B4": red}); 	//将字符串解析为数组，用运算符进行计算
+ return ndvi;									//返回NDVI的值
+}
+
+function NDVI_V3(img) {					//定义方法三函数
+ var ndvi = img.normalizedDifference(["B5","B4"]);	//使用谷歌提供的归一化方法
+ return ndvi;						//返回NDVI的值
+}
+
+
+								//使用兰州附近2016至2019的Landsat8影像 
+var lz_col = ee.ImageCollection("LANDSAT/LC08/C01/T1_RT_TOA");	//选择Landsat数据集
+var roi = ee.Geometry.Point([103.82, 36.06]);			//定义一个兰州市内的点
+var img = ee.Image(lz_col.filterBounds(roi)			//选择包含兰州市的Landsat8影像
+                       .filterDate("2016-01-01", "2019-12-31")	//筛选影像的时间为2016年至2019年
+                       .first());				//获取匹配影像中第一幅图像			
+
+var ndvi1 = NDVI_V1(img);	//将第一种方法中的函数所返回的NDVI值赋给变量ndvi1
+var ndvi2 = NDVI_V2(img);	//将第二种方法中的函数所返回的NDVI值赋给变量ndvi2
+var ndvi3 = NDVI_V3(img);	//将第三种方法中的函数所返回的NDVI值赋给变量ndvi3
+	
+var visParam = {	//NDVI在一定范围内赋色彩，NDVI值范围是-1到1，
+ min: -0.2,		//最小值-0.2
+ max: 0.8,		//最大值0.8
+ palette: 'FFFFFF, CE7E45, DF923D, F1B555, FCD163, 99B718, 74A901, 66A000, 529400,' +
+   '3E8601, 207401, 056201, 004C00, 023B01, 012E01, 011D01, 011301'
+};			//定义色彩
+
+Map.addLayer(img, {bands:["B4", "B3", "B2"], max:0.3}, "raw_img");	//真彩色显示原影像
+Map.addLayer(ndvi1, visParam, "ndvi_1");				//显示方法一输出的NDVI图像
+Map.addLayer(ndvi2, visParam, "ndvi_2");				//显示方法二输出的NDVI图像
+Map.addLayer(ndvi3, visParam, "ndvi_3");				//显示方法三输出的NDVI图像
+Map.centerObject(roi, 9);
+
+var ndvi_list = lz_col.filterDate("2016-01-01", "2019-12-31")				//按时间筛选数据
+   .map(function(image) {   								//以云量为标准筛选landsat8影像
+   var cloud = ee.Algorithms.Landsat.simpleCloudScore(image).select("cloud");		//计算Landsat8影像云量
+   var mask = cloud.lte(20);								//制作有云地区的掩膜
+   var ndvi = image.normalizedDifference(['B5', 'B4']).rename('NDVI');			//计算NDVI
+   return image.addBands(ndvi).updateMask(mask);					//返回无云新图像并加入NDVI
+});
+
