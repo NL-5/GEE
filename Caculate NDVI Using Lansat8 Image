@@ -8,7 +8,7 @@ function NDVI_V1(img) {                               //定义方法一函数
 function NDVI_V2(img) {                                                         //定义方法二函数
  var nir = img.select("B5");                                                    //选择影像的Band 5，近红外波段
  var red = img.select("B4");                                                    //选择影像的Band 4，红光波段
- var ndvi = img.expression("(B5 - B4)/(B5 + B4)", {"B5": nir, B4": red}); 	//将字符串解析为数组，用运算符进行计算
+ var ndvi = img.expression("(B5 - B4)/(B5 + B4)", {"B5": nir, "B4": red}); 	//将字符串解析为数组，用运算符进行计算
  return ndvi;									//返回NDVI的值
 }
 
