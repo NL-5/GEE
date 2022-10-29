@@ -18,10 +18,10 @@ function NDVI_V3(img) {					//定义方法三函数
 }
 
 
-								//使用兰州附近2016至2019的Landsat8影像 
+								//使用LZ附近2016至2019的Landsat8影像 
 var lz_col = ee.ImageCollection("LANDSAT/LC08/C01/T1_RT_TOA");	//选择Landsat数据集
-var roi = ee.Geometry.Point([103.82, 36.06]);			//定义一个兰州市内的点
-var img = ee.Image(lz_col.filterBounds(roi)			//选择包含兰州市的Landsat8影像
+var roi = ee.Geometry.Point([103.82, 36.06]);			//定义一个LZ市内的点
+var img = ee.Image(lz_col.filterBounds(roi)			//选择包含LZ市的Landsat8影像
                        .filterDate("2016-01-01", "2019-12-31")	//筛选影像的时间为2016年至2019年
                        .first());				//获取匹配影像中第一幅图像			
 
